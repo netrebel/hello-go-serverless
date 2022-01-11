@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -15,12 +15,29 @@ import (
 // https://serverless.com/framework/docs/providers/aws/events/apigateway/#lambda-proxy-integration
 type Response events.APIGatewayProxyResponse
 
+type MyEvent struct {
+	Body string `json:"body"`
+}
+
+type Body struct {
+	Name string `json:"name"`
+}
+
 // Handler is our lambda handler invoked by the `lambda.Start` function call
-func Handler(ctx context.Context) (Response, error) {
+func Handler(event MyEvent) (Response, error) {
 	var buf bytes.Buffer
 
+	fmt.Printf("event: %+v\n", event.Body)
+
+	str := event.Body
+	b := Body{}
+	err := json.Unmarshal([]byte(str), &b)
+	if err != nil {
+		fmt.Printf("Could not unmarshall: %v\n", event.Body)
+	}
+
 	body, err := json.Marshal(map[string]interface{}{
-		"message": "Okay so your other function also executed successfully!",
+		"message": fmt.Sprintf("Okay so your other function also executed successfully %v!", b.Name),
 	})
 	if err != nil {
 		return Response{StatusCode: 404}, err
